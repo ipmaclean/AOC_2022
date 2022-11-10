@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace AOC_Base
+namespace AOC_2022
 {
     internal class PuzzleManagerFactory
     {

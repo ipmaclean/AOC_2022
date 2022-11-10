@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace AOC_Base
+namespace AOC_2022
 {
     public abstract class InputHelper<T> : IInputHelper<T>
 {

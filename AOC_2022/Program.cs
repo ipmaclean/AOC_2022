@@ -1,4 +1,4 @@
-﻿using AOC_Base;
+﻿using AOC_2022;
 
 await RunProgramAsync();
 
@@ -32,6 +32,20 @@ void ShowGraphics(int lineDelay)
     Console.WriteLine(@"*                                       /  _  \ (_| |\ V /  __/ | | | |_  | (_) |  _| / /__| (_) | (_| |  __/                                   *");
     Thread.Sleep(lineDelay);
     Console.WriteLine(@"*                                       \_/ \_/\__,_| \_/ \___|_| |_|\__|  \___/|_|   \____/\___/ \__,_|\___|                                   *");
+    Thread.Sleep(lineDelay);
+    Console.WriteLine(@"*                                                                                                                                               *");
+    Thread.Sleep(lineDelay);
+    Console.WriteLine(@"*                                                                                                                                               *");
+    Thread.Sleep(lineDelay);
+    Console.WriteLine(@"*                                                               ____   ___ ____  ____                                                           *");
+    Thread.Sleep(lineDelay);
+    Console.WriteLine(@"*                                                              |___ \ / _ \___ \|___ \                                                          *");
+    Thread.Sleep(lineDelay);
+    Console.WriteLine(@"*                                                                __) | | | |__) | __) |                                                         *");
+    Thread.Sleep(lineDelay);
+    Console.WriteLine(@"*                                                               / __/| |_| / __/ / __/                                                          *");
+    Thread.Sleep(lineDelay);
+    Console.WriteLine(@"*                                                              |_____|\___/_____|_____|                                                         *");
     Thread.Sleep(lineDelay);
     Console.WriteLine(@"*                                                                                                                                               *");
     Thread.Sleep(lineDelay);

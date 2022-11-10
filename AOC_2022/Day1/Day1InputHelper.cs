@@ -1,4 +1,4 @@
-﻿namespace AOC_Base.Day1
+﻿namespace AOC_2022.Day1
 {
     internal class Day1InputHelper : InputHelper<List<int>>
     {

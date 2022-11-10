@@ -1,4 +1,4 @@
-﻿namespace AOC_Base
+﻿namespace AOC_2022
 {
     public interface IInputHelper<T>
     {
