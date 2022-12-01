@@ -24,8 +24,8 @@
 
         public override Task SolvePartTwo()
         {
-            // It would be more performant to implement something like part one with three if
-            // else sections in the loop, but as it's not a large list sorting it all is fine.
+            // It would be more performant to implement something like part one
+            // three times, but as it's not a large list sorting it all is fine.
             ElfInventories = ElfInventories.OrderByDescending(x => x.Sum()).ToList();
             var solution = 0;
             for (var i = 0; i < 3; i++)
