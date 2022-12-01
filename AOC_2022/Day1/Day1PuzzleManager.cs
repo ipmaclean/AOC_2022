@@ -18,12 +18,7 @@
 
         public override Task SolvePartOne()
         {
-            var solution = 0;
-            foreach (var elf in ElfInventories)
-            {
-                solution = Math.Max(solution, elf.Sum());
-            }
-            Console.WriteLine($"The solution to part one is '{solution}'.");
+            Console.WriteLine($"The solution to part one is '{ElfInventories.Max(x => x.Sum())}'.");
             return Task.CompletedTask;
         }
 
