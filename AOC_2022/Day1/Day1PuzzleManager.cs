@@ -24,8 +24,9 @@
 
         public override Task SolvePartTwo()
         {
-            // It would be more performant to implement something like part one
-            // three times, but as it's not a large list sorting it all is fine.
+            // You could solve this in a single pass through the list with three 
+            // variables for max1, max2 and max3 with some comparisons in some
+            // if elses but as the list was not too long this was quicker and easier!
             ElfInventories = ElfInventories.OrderByDescending(x => x.Sum()).ToList();
             var solution = 0;
             for (var i = 0; i < 3; i++)
