@@ -18,12 +18,11 @@ namespace AOC_2022.Day4
                 while ((ln = sr.ReadLine()!) != null)
                 {
                     var matches = numberRegex.Matches(ln);
-                    var elves = new List<(int, int)>()
-                    {
+                    var elves = new ElfTeam(
                         (int.Parse(matches[0].Value), int.Parse(matches[1].Value)),
                         (int.Parse(matches[2].Value), int.Parse(matches[3].Value))
-                    };
-                    output.Add(new ElfTeam(elves));
+                    );
+                    output.Add(elves);
                 }
             }
             return output;

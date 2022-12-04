@@ -2,52 +2,33 @@
 {
     public class ElfTeam
     {
-        public List<(int LowerBound, int UpperBound)> Elves { get; set; }
+        public (int LowerBound, int UpperBound) ElfOne { get; set; }
+        public (int LowerBound, int UpperBound) ElfTwo { get; set; }
 
-        public ElfTeam(List<(int LowerBound, int UpperBound)> elves)
+        public ElfTeam((int LowerBound, int UpperBound) elfOne, (int LowerBound, int UpperBound) elfTwo)
         {
-            Elves = elves;
+            ElfOne = elfOne;
+            ElfTwo = elfTwo;
         }
 
         public bool IsFullyContained()
         {
-            try
+            if (ElfOne.LowerBound >= ElfTwo.LowerBound && ElfOne.UpperBound <= ElfTwo.UpperBound ||
+                ElfTwo.LowerBound >= ElfOne.LowerBound && ElfTwo.UpperBound <= ElfOne.UpperBound)
             {
-                if (Elves[0] == Elves[1])
-                {
-                    return true;
-                }
-                var elfWithLowestLowerBound = Elves.First(x => x.LowerBound == Elves.Min(x => x.LowerBound));
-                var otherElf = Elves.First(x => x != elfWithLowestLowerBound);
-
-                if (elfWithLowestLowerBound.UpperBound >= otherElf.UpperBound ||
-                    elfWithLowestLowerBound.LowerBound == otherElf.LowerBound && elfWithLowestLowerBound.UpperBound <= otherElf.UpperBound)
-                {
-                    return true;
-                }
-                return false;
+                return true;
             }
-            catch
-            {
-                throw;
-            }
+            return false;
         }
 
         public bool HasOverlap()
         {
-            try
+            if (ElfOne.LowerBound < ElfTwo.LowerBound && ElfOne.UpperBound < ElfTwo.LowerBound ||
+                ElfTwo.LowerBound < ElfOne.LowerBound && ElfTwo.UpperBound < ElfOne.LowerBound)
             {
-                if (Elves[0].LowerBound < Elves[1].LowerBound && Elves[0].UpperBound < Elves[1].LowerBound ||
-                    Elves[1].LowerBound < Elves[0].LowerBound && Elves[1].UpperBound < Elves[0].LowerBound)
-                {
-                    return false;
-                }
-                return true;
+                return false;
             }
-            catch
-            {
-                throw;
-            }
+            return true;
         }
     }
 }
