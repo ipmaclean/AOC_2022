@@ -1,20 +1,19 @@
-﻿namespace AOC_2022.Day6
+﻿namespace AOC_2022.Day8
 {
-    internal class Day6InputHelper : InputHelper<string>
+    internal class Day8InputHelper : InputHelper<List<int>>
     {
-        public Day6InputHelper(string fileName) : base(fileName)
+        public Day8InputHelper(string fileName) : base(fileName)
         {
         }
 
-        public override string Parse()
+        public override List<int> Parse()
         {
-            var output = string.Empty;
+            var output = new List<int>();
             using (var sr = new StreamReader(InputPath))
             {
                 string ln;
                 while ((ln = sr.ReadLine()!) != null)
                 {
-                    output = ln;
                 }
             }
             return output;
