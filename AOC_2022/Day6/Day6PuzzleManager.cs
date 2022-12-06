@@ -2,9 +2,11 @@
 {
     public class Day6PuzzleManager : PuzzleManager
     {
+        public string Input { get; set; }
         public Day6PuzzleManager()
         {
             var inputHelper = new Day6InputHelper(INPUT_FILE_NAME);
+            Input = inputHelper.Parse();
         }
         public override Task SolveBothParts()
         {
@@ -16,16 +18,26 @@
 
         public override Task SolvePartOne()
         {
-            var solution = 0;
-            Console.WriteLine($"The solution to part one is '{solution}'.");
+            Console.WriteLine($"The solution to part one is '{FindDistinct(4)}'.");
             return Task.CompletedTask;
         }
 
         public override Task SolvePartTwo()
         {
-            var solution = 0;
-            Console.WriteLine($"The solution to part two is '{solution}'.");
+            Console.WriteLine($"The solution to part two is '{FindDistinct(14)}'.");
             return Task.CompletedTask;
+        }
+
+        private int FindDistinct(int numberOfDistinct)
+        {
+            for (var i = 0; i < Input.Length; i++)
+            {
+                if (Input.Substring(i, numberOfDistinct).Distinct().Count() == numberOfDistinct)
+                {
+                    return i + numberOfDistinct;
+                }
+            }
+            return 0;
         }
     }
 }
