@@ -13,6 +13,6 @@
         public Folder? Parent { get; set; }
 
         public ICollection<Folder> Folders { get; set; } = new List<Folder>();
-        public ICollection<File> Files { get; set; } = new HashSet<File>();
+        public ICollection<File> Files { get; set; } = new List<File>();
     }
 }

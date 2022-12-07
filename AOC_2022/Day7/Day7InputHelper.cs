@@ -14,7 +14,8 @@ namespace AOC_2022.Day7
             using (var sr = new StreamReader(InputPath))
             {
                 var numberRegex = new Regex(@"\d+");
-                Folder currenctFolder = new Folder("", null);
+                var currentFolder = new Folder("/", null);
+                output.Add(currentFolder);
 
                 // Note that the list won't contain any folders that aren't navigated into - if such empty, unchecked folders exist
                 string ln;
@@ -24,15 +25,19 @@ namespace AOC_2022.Day7
                     {
                         if (ln.Substring(5) == "..")
                         {
-                            currenctFolder.Size = currenctFolder.Folders.Sum(x => x.Size) + currenctFolder.Files.Sum(x => x.Size);
-                            currenctFolder = currenctFolder.Parent!;
+                            currentFolder.Size = currentFolder.Folders.Sum(x => x.Size) + currentFolder.Files.Sum(x => x.Size);
+                            currentFolder = currentFolder.Parent!;
+                        }
+                        else if (ln.Substring(5) == "/")
+                        {
+                            continue;
                         }
                         else
                         {
-                            var childFolder = new Folder(ln.Substring(5), currenctFolder);
+                            var childFolder = new Folder(ln.Substring(5), currentFolder);
                             output.Add(childFolder);
-                            currenctFolder.Folders.Add(childFolder);
-                            currenctFolder = childFolder;
+                            currentFolder.Folders.Add(childFolder);
+                            currentFolder = childFolder;
                         }
                         continue;
                     }
@@ -45,13 +50,13 @@ namespace AOC_2022.Day7
                         continue;
                     }
                     var size = numberRegex.Match(ln).Value;
-                    currenctFolder.Files.Add(new File(ln.Substring(size.Length + 1), long.Parse(size), currenctFolder));
+                    currentFolder.Files.Add(new File(ln.Substring(size.Length + 1), long.Parse(size), currentFolder));
                 }
 
-                while (currenctFolder != null)
+                while (currentFolder != null)
                 {
-                    currenctFolder.Size = currenctFolder.Folders.Sum(x => x.Size) + currenctFolder.Files.Sum(x => x.Size);
-                    currenctFolder = currenctFolder.Parent!;
+                    currentFolder.Size = currentFolder.Folders.Sum(x => x.Size) + currentFolder.Files.Sum(x => x.Size);
+                    currentFolder = currentFolder.Parent!;
                 }
             }
             return output;
