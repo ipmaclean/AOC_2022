@@ -2,8 +2,6 @@
 {
     public class Day9PuzzleManager : PuzzleManager
     {
-        protected const string INPUT_FILE_NAME = "test2.txt";
-
         public List<(char Direction, int Distance)> Instructions { get; set; }
         public Day9PuzzleManager()
         {
@@ -26,8 +24,11 @@
 
             foreach (var instruction in Instructions)
             {
-                headPosition = MoveHead(instruction, headPosition);
-                tailPosition = CatchUpTail(headPosition, tailPosition, visitiedByTail);
+                for (var i = 0; i < instruction.Distance; i++)
+                {
+                    headPosition = MoveHead(instruction.Direction, headPosition);
+                    tailPosition = CatchUpTail(headPosition, tailPosition, visitiedByTail);
+                }
             }
 
             Console.WriteLine($"The solution to part one is '{visitiedByTail.Count}'.");
@@ -44,11 +45,14 @@
 
             foreach (var instruction in Instructions)
             {
-                positions[0] = MoveHead(instruction, positions[0]);
-                for (var i = 0; i < positions.Length - 1; i++)
+                for (var i = 0; i < instruction.Distance; i++)
                 {
-                    var isEndOfRope = i == positions.Length - 2;
-                    positions[i + 1] = CatchUpTail(positions[i], positions[i + 1], visitiedByTail, isEndOfRope);
+                    positions[0] = MoveHead(instruction.Direction, positions[0]);
+                    for (var j = 0; j < positions.Length - 1; j++)
+                    {
+                        var isEndOfRope = j == positions.Length - 2;
+                        positions[j + 1] = CatchUpTail(positions[j], positions[j + 1], visitiedByTail, isEndOfRope);
+                    }
                 }
             }
 
@@ -56,28 +60,30 @@
             return Task.CompletedTask;
         }
 
-        private (int, int) MoveHead((char Direction, int Distance) instruction, (int X, int Y) headPosition)
-            => instruction.Direction switch
+        private (int, int) MoveHead(char direction, (int X, int Y) headPosition)
+            => direction switch
             {
-                'U' => (headPosition.X, headPosition.Y + instruction.Distance),
-                'R' => (headPosition.X + instruction.Distance, headPosition.Y),
-                'D' => (headPosition.X, headPosition.Y - instruction.Distance),
-                'L' => (headPosition.X - instruction.Distance, headPosition.Y),
-                _ => throw new ArgumentOutOfRangeException(nameof(instruction.Direction), $"Unexpected direction value: {instruction.Direction}"),
+                'U' => (headPosition.X, headPosition.Y + 1),
+                'R' => (headPosition.X + 1, headPosition.Y),
+                'D' => (headPosition.X, headPosition.Y - 1),
+                'L' => (headPosition.X - 1, headPosition.Y),
+                _ => throw new ArgumentOutOfRangeException(nameof(direction), $"Unexpected direction value: {direction}"),
             };
 
         private (int, int) CatchUpTail((int X, int Y) headPosition, (int X, int Y) tailPosition, HashSet<(int, int)> visitiedByTail, bool isEndOfRope = true)
         {
-            while (!TailHasCaughtUp(headPosition, tailPosition))
+            if (TailHasCaughtUp(headPosition, tailPosition))
             {
-                var xUnitVector = UnitVectorOrZero(headPosition.X - tailPosition.X);
-                var yUnitVector = UnitVectorOrZero(headPosition.Y - tailPosition.Y);
-                tailPosition.X += xUnitVector;
-                tailPosition.Y += yUnitVector;
-                if (isEndOfRope)
-                {
-                    TryAddToHashSet(visitiedByTail, tailPosition);
-                }
+                return tailPosition;
+            }
+
+            var xUnitVector = UnitVectorOrZero(headPosition.X - tailPosition.X);
+            var yUnitVector = UnitVectorOrZero(headPosition.Y - tailPosition.Y);
+            tailPosition.X += xUnitVector;
+            tailPosition.Y += yUnitVector;
+            if (isEndOfRope)
+            {
+                TryAddToHashSet(visitiedByTail, tailPosition);
             }
             return tailPosition;
         }
