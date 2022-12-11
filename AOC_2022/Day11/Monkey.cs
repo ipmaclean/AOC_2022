@@ -18,7 +18,7 @@
         public int FalseMonkey { get; private set; }
         public long InspectionCount { get; private set; } = 0;
 
-        public (long itemWorryLevel, int monkeyToThrowTo) InspectAndThrow(bool isPartOne)
+        public (long itemWorryLevel, int monkeyToThrowTo) InspectAndThrow(bool isPartOne, long divisibilitiesLcm)
         {
             var item = Items.Dequeue();
             InspectionCount++;
@@ -26,6 +26,10 @@
             if (isPartOne)
             {
                 item /= 3;
+            }
+            else
+            {
+                item = item % divisibilitiesLcm;
             }
             return item % DivisibilityTest == 0 ?
                 (item, TrueMonkey) :

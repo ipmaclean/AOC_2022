@@ -2,8 +2,6 @@
 {
     public class Day11PuzzleManager : PuzzleManager
     {
-        //new protected const string INPUT_FILE_NAME = "test.txt";
-
         private Day11InputHelper _inputHelper { get; set; }
 
         public Day11PuzzleManager()
@@ -33,6 +31,12 @@
         private void Solve(bool isPartOne)
         {
             var monkeys = _inputHelper.Parse();
+            // Assuming all monkeys have prime numbers as their divisibility check
+            var divisibilitiesLcm = 1L;
+            foreach (var monkey in monkeys)
+            {
+                divisibilitiesLcm *= monkey.DivisibilityTest;
+            }
 
             var numberOfRounds = isPartOne ? 20 : 10_000;
 
@@ -42,7 +46,7 @@
                 {
                     while (monkey.Items.Any())
                     {
-                        (var item, var monkeyToThrowTo) = monkey.InspectAndThrow(isPartOne);
+                        (var item, var monkeyToThrowTo) = monkey.InspectAndThrow(isPartOne, divisibilitiesLcm);
                         monkeys[monkeyToThrowTo].AddItem(item);
                     }
                 }
