@@ -29,7 +29,7 @@
             }
             else
             {
-                item = item % divisibilitiesLcm;
+                item %= divisibilitiesLcm;
             }
             return item % DivisibilityTest == 0 ?
                 (item, TrueMonkey) :
