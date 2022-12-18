@@ -2,9 +2,17 @@
 {
     public class Day18PuzzleManager : PuzzleManager
     {
-        //new protected const string INPUT_FILE_NAME = "test.txt";
+        private readonly List<(int X, int Y, int Z)> _adjacentCoordVectors = new List<(int X, int Y, int Z)>()
+            {
+                (1, 0, 0),
+                (-1, 0, 0),
+                (0, 1, 0),
+                (0, -1, 0),
+                (0, 0, 1),
+                (0, 0, -1)
+            };
 
-        public Day18PuzzleManager()
+    public Day18PuzzleManager()
         {
             var inputHelper = new Day18InputHelper(INPUT_FILE_NAME);
             Coords = inputHelper.Parse();
@@ -31,35 +39,87 @@
             return Task.CompletedTask;
         }
 
-        private int CountEmptyFaces((int X, int Y, int Z) coord)
+        public override Task SolvePartTwo()
         {
-            var emptyFaceCount = 0;
-            var adjacentCoordVectors = new List<(int X, int Y, int Z)>()
+            var airBubbles = new HashSet<(int X, int Y, int Z)>();
+            var solution = 0;
+            foreach (var coord in Coords)
             {
-                (1, 0, 0),
-                (-1, 0, 0),
-                (0, 1, 0),
-                (0, -1, 0),
-                (0, 0, 1),
-                (0, 0, -1)
-            };
-
-            foreach (var adjacentCoordVector in adjacentCoordVectors)
+                solution += CountEmptyFaces(coord, airBubbles, isPartTwo: true);
+            }
+            Console.WriteLine($"The solution to part two is '{solution}'.");
+            return Task.CompletedTask;
+        }
+        private int CountEmptyFaces((int X, int Y, int Z) coord, HashSet<(int X, int Y, int Z)>? airBubbles = null, bool isPartTwo = false)
+        {
+            if (airBubbles is null)
+            {
+                airBubbles = new HashSet<(int X, int Y, int Z)>();
+            }
+            var emptyFaceCount = 0;
+            foreach (var adjacentCoordVector in _adjacentCoordVectors)
             {
                 var adjacentCoord = (coord.X + adjacentCoordVector.X, coord.Y + adjacentCoordVector.Y, coord.Z + adjacentCoordVector.Z);
                 if (!Coords.Contains(adjacentCoord))
                 {
+                    if (isPartTwo)
+                    {
+                        var coordsBeingChecked = new HashSet<(int X, int Y, int Z)>();
+                        if (IsInAirBubble(adjacentCoord, coordsBeingChecked, airBubbles))
+                        {
+                            airBubbles.UnionWith(coordsBeingChecked);
+                            continue;
+                        }
+                    }
                     emptyFaceCount++;
                 }
             }
             return emptyFaceCount;
         }
 
-        public override Task SolvePartTwo()
+        private bool IsInAirBubble(
+            (int X, int Y, int Z) coord,
+            HashSet<(int X, int Y, int Z)> coordsBeingChecked,
+            HashSet<(int X, int Y, int Z)> airBubbles)
         {
-            var solution = 0;
-            Console.WriteLine($"The solution to part two is '{solution}'.");
-            return Task.CompletedTask;
+            if (airBubbles.Contains(coord))
+            {
+                return true;
+            }
+            if (CanSeeOutside(coord))
+            {
+                return false;
+            }
+            coordsBeingChecked.Add(coord);
+            foreach (var adjacentCoordVector in _adjacentCoordVectors)
+            {
+                var adjacentCoord = (coord.X + adjacentCoordVector.X, coord.Y + adjacentCoordVector.Y, coord.Z + adjacentCoordVector.Z);
+
+                if (coordsBeingChecked.Contains(adjacentCoord) || Coords.Contains(adjacentCoord))
+                {
+                    continue;
+                }
+
+                if (!IsInAirBubble(adjacentCoord, coordsBeingChecked, airBubbles))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private bool CanSeeOutside((int X, int Y, int Z) adjacentCoord)
+        {
+            if (Coords.Any(coord => coord.X < adjacentCoord.X && coord.Y == adjacentCoord.Y && coord.Z == adjacentCoord.Z) &&
+                Coords.Any(coord => coord.X > adjacentCoord.X && coord.Y == adjacentCoord.Y && coord.Z == adjacentCoord.Z) &&
+                Coords.Any(coord => coord.X == adjacentCoord.X && coord.Y < adjacentCoord.Y && coord.Z == adjacentCoord.Z) &&
+                Coords.Any(coord => coord.X == adjacentCoord.X && coord.Y > adjacentCoord.Y && coord.Z == adjacentCoord.Z) &&
+                Coords.Any(coord => coord.X == adjacentCoord.X && coord.Y == adjacentCoord.Y && coord.Z < adjacentCoord.Z) &&
+                Coords.Any(coord => coord.X == adjacentCoord.X && coord.Y == adjacentCoord.Y && coord.Z > adjacentCoord.Z))
+            {
+                return false;
+            }
+            return true;
         }
     }
 }
