@@ -95,8 +95,6 @@ namespace AOC_2022.Day16
         public override Task SolvePartTwo()
         {
             var valves = _inputHelper.Parse();
-            var opti1 = 0L;
-            var opti2 = 0L;
 
             foreach (var valve in valves.Where(x => x.Name == "AA" || x.Rate > 0))
             {
@@ -128,7 +126,6 @@ namespace AOC_2022.Day16
                 // Optimisation - if all remaining closed valve rates * time isn't better than best current, discard this path
                 if (currentState[0].TotalPressureReleased + currentState[1].TotalPressureReleased + workingValves.Where(x => !currentState[0].Path.Contains(x.Name) && !currentState[1].Path.Contains(x.Name)).Sum(x => x.Rate * movingState.TimeRemaining) < solution)
                 {
-                    opti1++;
                     continue;
                 }
 
@@ -192,7 +189,6 @@ namespace AOC_2022.Day16
                     if (visitedStates.Contains(nextDualStateHash))
                     {
                         // Saves about 10s on my input but at the cost of 1.4GB of memory!
-                        opti2++;
                         continue;
                     }
                     visitedStates.Add(nextDualStateHash);
