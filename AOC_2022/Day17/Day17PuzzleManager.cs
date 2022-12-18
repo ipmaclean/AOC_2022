@@ -5,11 +5,7 @@ namespace AOC_2022.Day17
 {
     public class Day17PuzzleManager : PuzzleManager
     {
-        //new protected const string INPUT_FILE_NAME = "test.txt";
-
-        private int _directionsIndex = 0;
-        private int _blockSelectorIndex = 0;
-        private Dictionary<string, (long, long)> _blockDroppedStatesToBlocksDroppedMap = new Dictionary<string, (long, long)>();
+        private Dictionary<long, long> _droppedBlocksToHeightMap = new Dictionary<long, long>();
 
         public Day17PuzzleManager()
         {
@@ -29,35 +25,37 @@ namespace AOC_2022.Day17
 
         public override Task SolvePartOne()
         {
-            _directionsIndex = 0;
-            _blockSelectorIndex = 0;
-            Console.WriteLine($"The solution to part one is '{DropBlocks(2022)}'.");
+            Console.WriteLine($"The solution to part one is '{Solve(2022)}'.");
             return Task.CompletedTask;
         }
 
         public override Task SolvePartTwo()
         {
-            _blockDroppedStatesToBlocksDroppedMap = new Dictionary<string, (long, long)>();
-            // The pattern of dropped blocks will repeat.
-            // When top 'layer' of blocks is the same and index of directions is the same and block type is the same
+            Console.WriteLine($"The solution to part two is '{Solve(1_000_000_000_000)}'.");
+            return Task.CompletedTask;
+        }
 
-            var totalBlocksToDrop = 1_000_000_000_000L;
-
-            ((var dropsToStartOfCycle, var heightAtStartOfCycle), (var dropsToEndOfCycle, var heightAtEndOfCycle))= FindDropsBeforeRepeatingBlockState();
+        private long Solve(long blocksToDrop)
+        {
+            // The pattern of dropped blocks will repeat when top 'layer' of blocks is
+            // the same and index of directions is the same and block type is the same.
+            ((var dropsToStartOfCycle, var heightAtStartOfCycle), (var dropsToEndOfCycle, var heightAtEndOfCycle)) = FindDropsBeforeRepeatingBlockState();
+            if (blocksToDrop <= dropsToEndOfCycle)
+            {
+                return _droppedBlocksToHeightMap[blocksToDrop];
+            }
 
             var heightGainDuringCycle = heightAtEndOfCycle - heightAtStartOfCycle;
             var cycleDuration = dropsToEndOfCycle - dropsToStartOfCycle;
 
-            totalBlocksToDrop -= dropsToStartOfCycle;
+            blocksToDrop -= dropsToStartOfCycle;
 
-            var quotient = totalBlocksToDrop / cycleDuration;
-            var remainder = totalBlocksToDrop % cycleDuration;
+            var quotient = blocksToDrop / cycleDuration;
+            var remainder = blocksToDrop % cycleDuration;
 
-            var totalHeightAtEndOfCycleAndRemainder = (long)DropBlocks((int)dropsToEndOfCycle + (int)remainder);
+            var totalHeightAtEndOfCycleAndRemainder = DropBlocks(dropsToEndOfCycle + remainder);
 
-            var solution = totalHeightAtEndOfCycleAndRemainder + (quotient - 1) * heightGainDuringCycle;
-            Console.WriteLine($"The solution to part two is '{solution}'.");
-            return Task.CompletedTask;
+            return totalHeightAtEndOfCycleAndRemainder + (quotient - 1) * heightGainDuringCycle;
         }
 
         private static string GetBlockDroppedStateHash(List<(int X, int Y)> topLayer, int blockSelectorIndex, int directionsIndex)
@@ -74,24 +72,24 @@ namespace AOC_2022.Day17
             return sb.ToString();
         }
 
-        private int DropBlocks(int numberOfBlocksToDrop)
+        private long DropBlocks(long numberOfBlocksToDrop)
         {
-            _directionsIndex = 0;
-            _blockSelectorIndex = 0;
+            var directionsIndex = 0;
+            var blockSelectorIndex = 0;
             var existingBlocks = new HashSet<(int x, int y)>();
-            var blocksDropped = 0;
+            var blocksDropped = 0L;
             var highestBlockHeight = 0;
 
             while (blocksDropped++ < numberOfBlocksToDrop)
             {
-                var block = new Block(_blockSelectorIndex, highestBlockHeight);
-                _blockSelectorIndex = (_blockSelectorIndex + 1) % 5;
+                var block = new Block(blockSelectorIndex, highestBlockHeight);
+                blockSelectorIndex = (blockSelectorIndex + 1) % 5;
 
                 var blockMoving = true;
                 while (blockMoving)
                 {
-                    block.TryMoveHorizontal(Directions[_directionsIndex], existingBlocks);
-                    _directionsIndex = (_directionsIndex + 1) % Directions.Length;
+                    block.TryMoveHorizontal(Directions[directionsIndex], existingBlocks);
+                    directionsIndex = (directionsIndex + 1) % Directions.Length;
                     blockMoving = block.TryMoveDown(existingBlocks);
                 }
                 existingBlocks.UnionWith(block.Coords);
@@ -103,34 +101,37 @@ namespace AOC_2022.Day17
 
         private ((long firstBlocksDropped, long firstBlockHeight), (long currentBlocksDropped, long currentBlockHeight)) FindDropsBeforeRepeatingBlockState()
         {
-            _directionsIndex = 0;
-            _blockSelectorIndex = 0;
+            var directionsIndex = 0;
+            var blockSelectorIndex = 0;
             var existingBlocks = new HashSet<(int x, int y)>();
             var blocksDropped = 0L;
             var highestBlockHeight = 0;
+            var blockDroppedStatesToBlocksDroppedAndHeightMap = new Dictionary<string, (long, long)>();
+            _droppedBlocksToHeightMap = new Dictionary<long, long>();
 
             while (true)
             {
-                var block = new Block(_blockSelectorIndex, highestBlockHeight);
-                _blockSelectorIndex = (_blockSelectorIndex + 1) % 5;
+                var block = new Block(blockSelectorIndex, highestBlockHeight);
+                blockSelectorIndex = (blockSelectorIndex + 1) % 5;
 
                 var blockMoving = true;
                 while (blockMoving)
                 {
-                    block.TryMoveHorizontal(Directions[_directionsIndex], existingBlocks);
-                    _directionsIndex = (_directionsIndex + 1) % Directions.Length;
+                    block.TryMoveHorizontal(Directions[directionsIndex], existingBlocks);
+                    directionsIndex = (directionsIndex + 1) % Directions.Length;
                     blockMoving = block.TryMoveDown(existingBlocks);
                 }
                 blocksDropped++;
                 existingBlocks.UnionWith(block.Coords);
                 highestBlockHeight = Math.Max(highestBlockHeight, block.Coords.Max(coord => coord.Y));
 
-                var blockDroppedStateHash = GetBlockDroppedStateHash(CalculateTopLayer(existingBlocks), _blockSelectorIndex, _directionsIndex);
-                if (_blockDroppedStatesToBlocksDroppedMap.ContainsKey(blockDroppedStateHash))
+                var blockDroppedStateHash = GetBlockDroppedStateHash(CalculateTopLayer(existingBlocks), blockSelectorIndex, directionsIndex);
+                if (blockDroppedStatesToBlocksDroppedAndHeightMap.ContainsKey(blockDroppedStateHash))
                 {
-                    return (_blockDroppedStatesToBlocksDroppedMap[blockDroppedStateHash], (blocksDropped, (long)highestBlockHeight));
+                    return (blockDroppedStatesToBlocksDroppedAndHeightMap[blockDroppedStateHash], (blocksDropped, highestBlockHeight));
                 }
-                _blockDroppedStatesToBlocksDroppedMap.Add(blockDroppedStateHash, (blocksDropped, (long)highestBlockHeight));
+                blockDroppedStatesToBlocksDroppedAndHeightMap.Add(blockDroppedStateHash, (blocksDropped, highestBlockHeight));
+                _droppedBlocksToHeightMap.Add(blocksDropped, highestBlockHeight);
             }
         }
 
