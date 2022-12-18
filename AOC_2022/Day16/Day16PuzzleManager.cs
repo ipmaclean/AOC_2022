@@ -5,8 +5,6 @@ namespace AOC_2022.Day16
 {
     public class Day16PuzzleManager : PuzzleManager
     {
-        //new protected const string INPUT_FILE_NAME = "test.txt";
-
         private Day16InputHelper _inputHelper;
         public Day16PuzzleManager()
         {
