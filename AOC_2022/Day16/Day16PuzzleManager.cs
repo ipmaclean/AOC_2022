@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 
 namespace AOC_2022.Day16
 {
@@ -140,6 +141,7 @@ namespace AOC_2022.Day16
             var solution = 0;
             var firstValve = valves.First(x => x.Name == "AA");
             var workingValves = valves.Where(x => x.Rate > 0).ToList();
+            var visitedStates = new HashSet<string>();
 
             // Need to use time elapsed for this instead of time left
             var nextSteps = new PriorityQueue<Day16BreadthFirstSearchState[], int>();
@@ -147,130 +149,59 @@ namespace AOC_2022.Day16
                 new Day16BreadthFirstSearchState[] {
                     new Day16BreadthFirstSearchState(firstValve, new List<string>(), 26, 0),
                     new Day16BreadthFirstSearchState(firstValve, new List<string>(), 26, 0) },
-                0);
+                26);
             while (nextSteps.TryDequeue(out var currentState, out int timeElapsed))
             {
-                var timeRemaining = 26 - timeElapsed;
+                var unvisitedWorkingValves = workingValves.Where(x => !currentState[0].Path.Contains(x.Name) && !currentState[1].Path.Contains(x.Name)).ToList();
+
+                var movingState = currentState.First(x => x.TimeRemaining == currentState.Max(x => x.TimeRemaining));
+                var otherState = currentState.First(x => x != movingState);
 
                 // Optimisation - if all remaining closed valve rates * time isn't better than best current, discard this path
-                if (currentState[0].TotalPressureReleased + currentState[1].TotalPressureReleased + workingValves.Where(x => !currentState[0].Path.Contains(x.Name) && !currentState[1].Path.Contains(x.Name)).Sum(x => x.Rate * timeRemaining) < solution)
+                if (currentState[0].TotalPressureReleased + currentState[1].TotalPressureReleased + workingValves.Where(x => !currentState[0].Path.Contains(x.Name) && !currentState[1].Path.Contains(x.Name)).Sum(x => x.Rate * movingState.TimeRemaining) < solution)
                 {
                     continue;
                 }
 
-                var unvisitedWorkingValves = workingValves.Where(x => !currentState[0].Path.Contains(x.Name) && !currentState[1].Path.Contains(x.Name)).ToList();
 
-                if (currentState[0].TimeRemaining == currentState[1].TimeRemaining && unvisitedWorkingValves.Count > 1)
+                var addedCurrentState = false;
+                foreach (var nextValve in unvisitedWorkingValves)
                 {
-                    for (var i = 0; i < unvisitedWorkingValves.Count; i++)
-                    {
-                        for (var j = 0; j < unvisitedWorkingValves.Count; j++)
-                        {
-                            if (i == j)
-                            {
-                                continue;
-                            }
-                            // Time's up - might be an issue here if one runs out but other's ok - my head is not working well enough to figure it out
-
-                            var currentStateOneOutOfTime = currentState[0].TimeRemaining - (currentState[0].Valve.Distances[unvisitedWorkingValves[i]] + 1) <= 0;
-                            var currentStateTwoOutOfTime = currentState[1].TimeRemaining - (currentState[1].Valve.Distances[unvisitedWorkingValves[j]] + 1) <= 0;
-
-                            var currentStateOneNewTotalPressureReleased = currentStateOneOutOfTime ?
-                                currentState[0].TotalPressureReleased :
-                                currentState[0].TotalPressureReleased + (currentState[0].TimeRemaining - (currentState[0].Valve.Distances[unvisitedWorkingValves[i]] + 1)) * unvisitedWorkingValves[i].Rate;
-                            var currentStateTwoNewTotalPressureReleased = currentStateTwoOutOfTime ?
-                                currentState[1].TotalPressureReleased :
-                                currentState[1].TotalPressureReleased + (currentState[1].TimeRemaining - (currentState[1].Valve.Distances[unvisitedWorkingValves[j]] + 1)) * unvisitedWorkingValves[j].Rate;
-
-
-                            if (currentStateOneOutOfTime && currentStateTwoOutOfTime)
-                            {
-                                solution = Math.Max(
-                                    solution,
-                                    currentState[0].TotalPressureReleased + currentState[1].TotalPressureReleased
-                                    );
-                                continue;
-                            }
-
-                            var newTotalPressuresReleased = new int[] {
-                                currentStateOneNewTotalPressureReleased,
-                                currentStateTwoNewTotalPressureReleased
-                            };
-
-
-                            var valvesToVisit = currentStateOneOutOfTime || currentStateTwoOutOfTime ? 1 : 2;
-                            // Visited every working valve
-                            if (currentState[0].Path.Count + currentState[1].Path.Count + valvesToVisit == workingValves.Count)
-                            {
-                                solution = Math.Max(
-                                    solution,
-                                    newTotalPressuresReleased[0] + newTotalPressuresReleased[1]
-                                    );
-                                continue;
-                            }
-
-                            var newPaths = new List<string>[] {
-                                new List<string>(currentState[0].Path),
-                                new List<string>(currentState[1].Path),
-                            };
-
-                            if (!currentStateOneOutOfTime)
-                            {
-                                newPaths[0].Add(unvisitedWorkingValves[i].Name);
-                            }
-                            if (!currentStateTwoOutOfTime)
-                            {
-                                newPaths[1].Add(unvisitedWorkingValves[j].Name);
-                            }
-
-                            var timeRemainingStateOne = currentStateOneOutOfTime ?
-                                currentState[0].TimeRemaining :
-                                currentState[0].TimeRemaining - (currentState[0].Valve.Distances[unvisitedWorkingValves[i]] + 1);
-                            var timeRemainingStateTwo = currentStateTwoOutOfTime ?
-                                currentState[1].TimeRemaining :
-                                currentState[1].TimeRemaining - (currentState[1].Valve.Distances[unvisitedWorkingValves[j]] + 1);
-
-                            var lowestTimeElapsed = 26 - Math.Max(
-                                timeRemainingStateOne,
-                                timeRemainingStateTwo
-                                );
-
-                            var nextValveStateOne = currentStateOneOutOfTime ?
-                                currentState[0].Valve :
-                                unvisitedWorkingValves[i];
-                            var nextValveStateTwo = currentStateTwoOutOfTime ?
-                                currentState[1].Valve :
-                                unvisitedWorkingValves[j];
-
-                            nextSteps.Enqueue(
-                                new Day16BreadthFirstSearchState[] {
-                                new Day16BreadthFirstSearchState(nextValveStateOne, newPaths[0], timeRemainingStateOne, newTotalPressuresReleased[0]),
-                                new Day16BreadthFirstSearchState(nextValveStateTwo, newPaths[1], timeRemainingStateTwo, newTotalPressuresReleased[1]) },
-                                lowestTimeElapsed);
-                        }
-                    }
-                }
-                else if (currentState[0].TimeRemaining == currentState[1].TimeRemaining && unvisitedWorkingValves.Count == 1)
-                {
-                    var unvisitedValve = unvisitedWorkingValves[0];
-                    var nearestState = currentState.First(x => x.Valve.Distances[unvisitedValve] == currentState.Min(x => x.Valve.Distances[unvisitedValve]));
-                    var otherState = currentState.First(x => x != nearestState);
-
+                    Day16BreadthFirstSearchState[] nextDualState;
+                    int lowestTimeRemaining;
                     // Time's up
-                    if (nearestState.TimeRemaining - (nearestState.Valve.Distances[unvisitedValve] + 1) <= 0)
+                    if (movingState.TimeRemaining - (movingState.Valve.Distances[nextValve] + 1) <= 0)
                     {
-                        solution = Math.Max(
-                            solution,
-                            nearestState.TotalPressureReleased + otherState.TotalPressureReleased
-                            );
+                        if (otherState.TimeRemaining == 0)
+                        {
+                            solution = Math.Max(
+                                solution,
+                                movingState.TotalPressureReleased + otherState.TotalPressureReleased
+                                );
+                            continue;
+                        }
+                        if (addedCurrentState)
+                        {
+                            continue;
+                        }
+
+                        addedCurrentState = true;
+
+                        nextDualState = new Day16BreadthFirstSearchState[]
+                        {
+                            new Day16BreadthFirstSearchState(movingState.Valve, new List<string>(movingState.Path), 0, movingState.TotalPressureReleased),
+                            otherState
+                        };
+                        lowestTimeRemaining = otherState.TimeRemaining;
+                        nextSteps.Enqueue(nextDualState, lowestTimeRemaining);
                         continue;
                     }
 
                     var newTotalPressureReleased =
-                        nearestState.TotalPressureReleased + (nearestState.TimeRemaining - (nearestState.Valve.Distances[unvisitedValve] + 1)) * unvisitedValve.Rate;
+                        movingState.TotalPressureReleased + (movingState.TimeRemaining - (movingState.Valve.Distances[nextValve] + 1)) * nextValve.Rate;
 
                     // Visited every working valve
-                    if (nearestState.Path.Count + otherState.Path.Count + 1 == workingValves.Count)
+                    if (movingState.Path.Count + otherState.Path.Count + 1 == workingValves.Count)
                     {
                         solution = Math.Max(
                             solution,
@@ -279,60 +210,63 @@ namespace AOC_2022.Day16
                         continue;
                     }
 
-                    var newPath = new List<string>(nearestState.Path);
-                    newPath.Add(unvisitedValve.Name);
+                    var newPath = new List<string>(movingState.Path);
+                    newPath.Add(nextValve.Name);
 
-                    var lowestTimeElapsed = 26 - Math.Max(nearestState.TimeRemaining - (nearestState.Valve.Distances[unvisitedValve] + 1), otherState.TimeRemaining);
-                    nextSteps.Enqueue(
-                        new Day16BreadthFirstSearchState[] {
-                                new Day16BreadthFirstSearchState(unvisitedValve, newPath, nearestState.TimeRemaining - (nearestState.Valve.Distances[unvisitedValve] + 1), newTotalPressureReleased),
-                                otherState },
-                        lowestTimeElapsed);
-                }
-                else
-                {
-                    var readyState = currentState.First(x => x.TimeRemaining == currentState.Max(x => x.TimeRemaining));
-                    var unreadyState = currentState.First(x => x != readyState);
+                    lowestTimeRemaining = Math.Min(movingState.TimeRemaining - (movingState.Valve.Distances[nextValve] + 1), otherState.TimeRemaining);
 
-                    foreach (var nextValve in unvisitedWorkingValves)
+                    nextDualState = new Day16BreadthFirstSearchState[]
                     {
-                        // Time's up
-                        if (readyState.TimeRemaining - (readyState.Valve.Distances[nextValve] + 1) <= 0)
-                        {
-                            solution = Math.Max(
-                                solution,
-                                readyState.TotalPressureReleased + unreadyState.TotalPressureReleased
-                                );
-                            continue;
-                        }
-
-                        var newTotalPressureReleased =
-                            readyState.TotalPressureReleased + (readyState.TimeRemaining - (readyState.Valve.Distances[nextValve] + 1)) * nextValve.Rate;
-
-                        // Visited every working valve
-                        if (readyState.Path.Count + unreadyState.Path.Count + 1 == workingValves.Count)
-                        {
-                            solution = Math.Max(
-                                solution,
-                                newTotalPressureReleased + unreadyState.TotalPressureReleased
-                                );
-                            continue;
-                        }
-
-                        var newPath = new List<string>(readyState.Path);
-                        newPath.Add(nextValve.Name);
-
-                        var lowestTimeElapsed = 26 - Math.Max(readyState.TimeRemaining - (readyState.Valve.Distances[nextValve] + 1), unreadyState.TimeRemaining);
-                        nextSteps.Enqueue(
-                            new Day16BreadthFirstSearchState[] {
-                                new Day16BreadthFirstSearchState(nextValve, newPath, readyState.TimeRemaining - (readyState.Valve.Distances[nextValve] + 1), newTotalPressureReleased),
-                                unreadyState },
-                            lowestTimeElapsed);
+                        new Day16BreadthFirstSearchState(nextValve, newPath, movingState.TimeRemaining - (movingState.Valve.Distances[nextValve] + 1), newTotalPressureReleased),
+                        otherState
+                    };
+                    var nextDualStateHash = GetDualStateHash(nextDualState);
+                    if (visitedStates.Contains(nextDualStateHash))
+                    {
+                        continue;
                     }
+                    visitedStates.Add(nextDualStateHash);
+                    nextSteps.Enqueue(nextDualState, lowestTimeRemaining);
                 }
             }
             Console.WriteLine($"The solution to part two is '{solution}'.");
             return Task.CompletedTask;
+        }
+
+        private string GetDualStateHash(Day16BreadthFirstSearchState[] dualStates)
+        {
+            Day16BreadthFirstSearchState firstState;
+            if (dualStates.All(x => x.Path.Count == 0))
+            {
+                firstState = dualStates[0];
+            }
+            else if (dualStates.Any(x => x.Path.Count == 0))
+            {
+                firstState = dualStates.First(x => x.Path.Count > 0);
+            }
+            else
+            {
+                firstState = dualStates.OrderBy(x => x.Path[0]).First();
+            }
+
+            var secondState = dualStates.First(x => x != firstState);
+            var sb = new StringBuilder();
+            var delimiter = "";
+            foreach (var valveName in firstState.Path)
+            {
+                sb.Append(delimiter);
+                sb.Append(valveName);
+                delimiter = ",";
+            }
+            sb.Append(":");
+            delimiter = "";
+            foreach (var valveName in secondState.Path)
+            {
+                sb.Append(delimiter);
+                sb.Append(valveName);
+                delimiter = ",";
+            }
+            return sb.ToString();
         }
     }
 }
