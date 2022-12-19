@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace AOC_2022.Day19
+﻿namespace AOC_2022.Day19
 {
     public class Day19PuzzleManager : PuzzleManager
     {
@@ -14,16 +12,9 @@ namespace AOC_2022.Day19
 
         public override Task SolveBothParts()
         {
-            var sw = new Stopwatch();
-            sw.Start();
             SolvePartOne();
-            sw.Stop();
-            Console.WriteLine($"Part One: {sw.ElapsedMilliseconds}ms.");
             Console.WriteLine();
-            sw.Restart();
             SolvePartTwo();
-            sw.Stop();
-            Console.WriteLine($"Part Two: {sw.ElapsedMilliseconds}ms.");
             return Task.CompletedTask;
         }
 
