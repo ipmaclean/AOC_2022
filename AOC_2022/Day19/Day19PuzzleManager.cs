@@ -40,8 +40,23 @@ namespace AOC_2022.Day19
             return Task.CompletedTask;
         }
 
-        private int FindMaxGeodes(Blueprint blueprint, int maxTime, int bestCurrentResult = 0)
+        public override Task SolvePartTwo()
         {
+            var solution = 1;
+            for (var i = 0; i < 3; i++)
+            {
+                solution *= FindMaxGeodes(Blueprints[i], 32);
+            }
+            Console.WriteLine($"The solution to part two is '{solution}'.");
+            return Task.CompletedTask;
+        }
+
+        private int FindMaxGeodes(Blueprint blueprint, int maxTime)
+        {
+            var mostExpensiveOreCost = Math.Max(blueprint.OreMachineCost, blueprint.ClayMachineCost);
+            mostExpensiveOreCost = Math.Max(mostExpensiveOreCost, blueprint.ObsidianMachineCost.Ore);
+            mostExpensiveOreCost = Math.Max(mostExpensiveOreCost, blueprint.GeodeMachineCost.Ore);
+
             var solution = 0;
             var states = new PriorityQueue<TimeState, int>();
             states.Enqueue(
@@ -64,7 +79,7 @@ namespace AOC_2022.Day19
                 // Optimisation - if building a geode machine every minute from now
                 // would not beat the current best solution then discard this state.
                 var maxPossibleGeodes = currentState.Geode.Material + timeRemaining * currentState.Geode.Machine + timeRemaining * (timeRemaining - 1) / 2;
-                if (maxPossibleGeodes <= solution || maxPossibleGeodes <= bestCurrentResult)
+                if (maxPossibleGeodes <= solution)
                 {
                     continue;
                 }
@@ -78,8 +93,12 @@ namespace AOC_2022.Day19
                     (currentState.Geode.Material + currentState.Geode.Machine, currentState.Geode.Machine));
                 states.Enqueue(noBuildState, timeRemaining - 1);
 
-                // If possible queue an ore machine state
-                if (currentState.Ore.Material >= blueprint.OreMachineCost)
+                
+
+                // If possible queue an ore machine state if you don't already have
+                // enough to create the most expensive machine every minute.
+                if (currentState.Ore.Material >= blueprint.OreMachineCost && 
+                    currentState.Ore.Machine < mostExpensiveOreCost)
                 {
                     states.Enqueue(noBuildState with
                     {
@@ -88,8 +107,10 @@ namespace AOC_2022.Day19
                     timeRemaining - 1);
                 }
 
-                // If possible queue a clay machine state
-                if (currentState.Ore.Material >= blueprint.ClayMachineCost)
+                // If possible queue a clay machine state if you don't already have
+                // enough to create an obsidian machine every minute.
+                if (currentState.Ore.Material >= blueprint.ClayMachineCost && 
+                    currentState.Clay.Machine < blueprint.ObsidianMachineCost.Clay)
                 {
                     states.Enqueue(noBuildState with
                     {
@@ -99,8 +120,11 @@ namespace AOC_2022.Day19
                     timeRemaining - 1);
                 }
 
-                // If possible queue a obsidian machine state
-                if (currentState.Ore.Material >= blueprint.ObsidianMachineCost.Ore && currentState.Clay.Material >= blueprint.ObsidianMachineCost.Clay)
+                // If possible queue a obsidian machine state if you don't already have
+                // enough to create a geode machine machine every minute.
+                if (currentState.Ore.Material >= blueprint.ObsidianMachineCost.Ore &&
+                    currentState.Clay.Material >= blueprint.ObsidianMachineCost.Clay && 
+                    currentState.Obsidian.Machine < blueprint.GeodeMachineCost.Obsidian)
                 {
                     states.Enqueue(noBuildState with
                     {
@@ -112,7 +136,8 @@ namespace AOC_2022.Day19
                 }
 
                 // If possible queue a geode machine state
-                if (currentState.Ore.Material >= blueprint.GeodeMachineCost.Ore && currentState.Obsidian.Material >= blueprint.GeodeMachineCost.Obsidian)
+                if (currentState.Ore.Material >= blueprint.GeodeMachineCost.Ore && 
+                    currentState.Obsidian.Material >= blueprint.GeodeMachineCost.Obsidian)
                 {
                     states.Enqueue(noBuildState with
                     {
@@ -125,13 +150,6 @@ namespace AOC_2022.Day19
             }
 
             return solution;
-        }
-
-        public override Task SolvePartTwo()
-        {
-            var solution = 0;
-            Console.WriteLine($"The solution to part two is '{solution}'.");
-            return Task.CompletedTask;
         }
     }
 }
