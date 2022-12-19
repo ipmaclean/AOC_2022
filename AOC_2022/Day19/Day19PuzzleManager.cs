@@ -4,8 +4,6 @@ namespace AOC_2022.Day19
 {
     public class Day19PuzzleManager : PuzzleManager
     {
-        //new protected const string INPUT_FILE_NAME = "test.txt";
-
         public Day19PuzzleManager()
         {
             var inputHelper = new Day19InputHelper(INPUT_FILE_NAME);
@@ -71,11 +69,6 @@ namespace AOC_2022.Day19
 
             while (states.TryDequeue(out var currentState, out var timeRemaining))
             {
-                if (currentState.Minute == maxTime)
-                {
-                    solution = Math.Max(solution, currentState.Geode.Material);
-                }
-
                 // Optimisation - if building a geode machine every minute from now
                 // would not beat the current best solution then discard this state.
                 var maxPossibleGeodes = currentState.Geode.Material + timeRemaining * currentState.Geode.Machine + timeRemaining * (timeRemaining - 1) / 2;
@@ -84,68 +77,79 @@ namespace AOC_2022.Day19
                     continue;
                 }
 
-                // Queue the state where nothing is built
-                var noBuildState = new TimeState(
-                    currentState.Minute + 1,
-                    (currentState.Ore.Material + currentState.Ore.Machine, currentState.Ore.Machine),
-                    (currentState.Clay.Material + currentState.Clay.Machine, currentState.Clay.Machine),
-                    (currentState.Obsidian.Material + currentState.Obsidian.Machine, currentState.Obsidian.Machine),
-                    (currentState.Geode.Material + currentState.Geode.Machine, currentState.Geode.Machine));
-                states.Enqueue(noBuildState, timeRemaining - 1);
-
-                
-
                 // If possible queue an ore machine state if you don't already have
                 // enough to create the most expensive machine every minute.
-                if (currentState.Ore.Material >= blueprint.OreMachineCost && 
-                    currentState.Ore.Machine < mostExpensiveOreCost)
+                var minutesUntilCanAffordOreMachine = Math.Max(0, (int)Math.Ceiling((double)(blueprint.OreMachineCost - currentState.Ore.Material) / (double)currentState.Ore.Machine));
+                if (timeRemaining - minutesUntilCanAffordOreMachine - 1 < 0 && currentState.Ore.Machine < mostExpensiveOreCost)
                 {
-                    states.Enqueue(noBuildState with
-                    {
-                        Ore = (noBuildState.Ore.Material - blueprint.OreMachineCost, noBuildState.Ore.Machine + 1)
-                    },
-                    timeRemaining - 1);
+                    solution = Math.Max(solution, currentState.Geode.Material + currentState.Geode.Machine * timeRemaining);
+                }
+                else if (currentState.Ore.Machine < mostExpensiveOreCost)
+                {
+                    states.Enqueue(new TimeState(
+                        currentState.Minute + minutesUntilCanAffordOreMachine + 1,
+                        (currentState.Ore.Material + currentState.Ore.Machine * (minutesUntilCanAffordOreMachine + 1) - blueprint.OreMachineCost, currentState.Ore.Machine + 1),
+                        (currentState.Clay.Material + currentState.Clay.Machine * (minutesUntilCanAffordOreMachine + 1), currentState.Clay.Machine),
+                        (currentState.Obsidian.Material + currentState.Obsidian.Machine * (minutesUntilCanAffordOreMachine + 1), currentState.Obsidian.Machine),
+                        (currentState.Geode.Material + currentState.Geode.Machine * (minutesUntilCanAffordOreMachine + 1), currentState.Geode.Machine)),
+                    timeRemaining - minutesUntilCanAffordOreMachine - 1);
                 }
 
                 // If possible queue a clay machine state if you don't already have
                 // enough to create an obsidian machine every minute.
-                if (currentState.Ore.Material >= blueprint.ClayMachineCost && 
-                    currentState.Clay.Machine < blueprint.ObsidianMachineCost.Clay)
+                var minutesUntilCanAffordClayMachine = Math.Max(0, (int)Math.Ceiling((double)(blueprint.ClayMachineCost - currentState.Ore.Material) / (double)currentState.Ore.Machine));
+                if (timeRemaining - minutesUntilCanAffordClayMachine - 1 < 0 && currentState.Clay.Machine < blueprint.ObsidianMachineCost.Clay)
                 {
-                    states.Enqueue(noBuildState with
-                    {
-                        Ore = (noBuildState.Ore.Material - blueprint.ClayMachineCost, noBuildState.Ore.Machine),
-                        Clay = (noBuildState.Clay.Material, noBuildState.Clay.Machine + 1)
-                    },
-                    timeRemaining - 1);
+                    solution = Math.Max(solution, currentState.Geode.Material + currentState.Geode.Machine * timeRemaining);
+                }
+                else if (currentState.Clay.Machine < blueprint.ObsidianMachineCost.Clay)
+                {
+                    states.Enqueue(new TimeState(
+                        currentState.Minute + minutesUntilCanAffordClayMachine + 1,
+                        (currentState.Ore.Material + currentState.Ore.Machine * (minutesUntilCanAffordClayMachine + 1) - blueprint.ClayMachineCost, currentState.Ore.Machine),
+                        (currentState.Clay.Material + currentState.Clay.Machine * (minutesUntilCanAffordClayMachine + 1), currentState.Clay.Machine + 1),
+                        (currentState.Obsidian.Material + currentState.Obsidian.Machine * (minutesUntilCanAffordClayMachine + 1), currentState.Obsidian.Machine),
+                        (currentState.Geode.Material + currentState.Geode.Machine * (minutesUntilCanAffordClayMachine + 1), currentState.Geode.Machine)),
+                    timeRemaining - minutesUntilCanAffordClayMachine - 1);
                 }
 
                 // If possible queue a obsidian machine state if you don't already have
                 // enough to create a geode machine machine every minute.
-                if (currentState.Ore.Material >= blueprint.ObsidianMachineCost.Ore &&
-                    currentState.Clay.Material >= blueprint.ObsidianMachineCost.Clay && 
-                    currentState.Obsidian.Machine < blueprint.GeodeMachineCost.Obsidian)
+                var minutesUntilCanAffordOreCostOfObsidianMachine = Math.Max(0, (int)Math.Ceiling((double)(blueprint.ObsidianMachineCost.Ore - currentState.Ore.Material) / (double)currentState.Ore.Machine));
+                var minutesUntilCanAffordClayCostOfObsidianMachine = Math.Max(0, (int)Math.Ceiling((double)(blueprint.ObsidianMachineCost.Clay - currentState.Clay.Material) / (double)currentState.Clay.Machine));
+                var minutesUntilCanAffordObsidianMachine = Math.Max(minutesUntilCanAffordOreCostOfObsidianMachine, minutesUntilCanAffordClayCostOfObsidianMachine);
+                if (currentState.Clay.Machine > 0 && timeRemaining - minutesUntilCanAffordObsidianMachine - 1 < 0 && currentState.Obsidian.Machine < blueprint.GeodeMachineCost.Obsidian)
                 {
-                    states.Enqueue(noBuildState with
-                    {
-                        Ore = (noBuildState.Ore.Material - blueprint.ObsidianMachineCost.Ore, noBuildState.Ore.Machine),
-                        Clay = (noBuildState.Clay.Material - blueprint.ObsidianMachineCost.Clay, noBuildState.Clay.Machine),
-                        Obsidian = (noBuildState.Obsidian.Material, noBuildState.Obsidian.Machine + 1)
-                    },
-                    timeRemaining - 1);
+                    solution = Math.Max(solution, currentState.Geode.Material + currentState.Geode.Machine * timeRemaining);
+                }
+                else if (currentState.Clay.Machine > 0 && currentState.Obsidian.Machine < blueprint.GeodeMachineCost.Obsidian)
+                {
+                    states.Enqueue(new TimeState(
+                        currentState.Minute + minutesUntilCanAffordObsidianMachine + 1,
+                        (currentState.Ore.Material + currentState.Ore.Machine * (minutesUntilCanAffordObsidianMachine + 1) - blueprint.ObsidianMachineCost.Ore, currentState.Ore.Machine),
+                        (currentState.Clay.Material + currentState.Clay.Machine * (minutesUntilCanAffordObsidianMachine + 1) - blueprint.ObsidianMachineCost.Clay, currentState.Clay.Machine),
+                        (currentState.Obsidian.Material + currentState.Obsidian.Machine * (minutesUntilCanAffordObsidianMachine + 1), currentState.Obsidian.Machine + 1),
+                        (currentState.Geode.Material + currentState.Geode.Machine * (minutesUntilCanAffordObsidianMachine + 1), currentState.Geode.Machine)),
+                    timeRemaining - minutesUntilCanAffordObsidianMachine - 1);
                 }
 
                 // If possible queue a geode machine state
-                if (currentState.Ore.Material >= blueprint.GeodeMachineCost.Ore && 
-                    currentState.Obsidian.Material >= blueprint.GeodeMachineCost.Obsidian)
+                var minutesUntilCanAffordOreCostOfGeodeMachine = Math.Max(0, (int)Math.Ceiling((double)(blueprint.GeodeMachineCost.Ore - currentState.Ore.Material) / (double)currentState.Ore.Machine));
+                var minutesUntilCanAffordObsidianCostOfGeodeMachine = Math.Max(0, (int)Math.Ceiling((double)(blueprint.GeodeMachineCost.Obsidian - currentState.Obsidian.Material) / (double)currentState.Obsidian.Machine));
+                var minutesUntilCanAffordGeodeMachine = Math.Max(minutesUntilCanAffordOreCostOfGeodeMachine, minutesUntilCanAffordObsidianCostOfGeodeMachine);
+                if (currentState.Obsidian.Machine > 0 && timeRemaining - minutesUntilCanAffordGeodeMachine - 1 < 0)
                 {
-                    states.Enqueue(noBuildState with
-                    {
-                        Ore = (noBuildState.Ore.Material - blueprint.GeodeMachineCost.Ore, noBuildState.Ore.Machine),
-                        Obsidian = (noBuildState.Obsidian.Material - blueprint.GeodeMachineCost.Obsidian, noBuildState.Obsidian.Machine),
-                        Geode = (noBuildState.Geode.Material, noBuildState.Geode.Machine + 1)
-                    },
-                    timeRemaining - 1);
+                    solution = Math.Max(solution, currentState.Geode.Material + currentState.Geode.Machine * timeRemaining);
+                }
+                else if (currentState.Obsidian.Machine > 0)
+                {
+                    states.Enqueue(new TimeState(
+                        currentState.Minute + minutesUntilCanAffordGeodeMachine + 1,
+                        (currentState.Ore.Material + currentState.Ore.Machine * (minutesUntilCanAffordGeodeMachine + 1) - blueprint.GeodeMachineCost.Ore, currentState.Ore.Machine),
+                        (currentState.Clay.Material + currentState.Clay.Machine * (minutesUntilCanAffordGeodeMachine + 1), currentState.Clay.Machine),
+                        (currentState.Obsidian.Material + currentState.Obsidian.Machine * (minutesUntilCanAffordGeodeMachine + 1) - blueprint.GeodeMachineCost.Obsidian, currentState.Obsidian.Machine),
+                        (currentState.Geode.Material + currentState.Geode.Machine * (minutesUntilCanAffordGeodeMachine + 1), currentState.Geode.Machine + 1)),
+                    timeRemaining - minutesUntilCanAffordGeodeMachine - 1);
                 }
             }
 
