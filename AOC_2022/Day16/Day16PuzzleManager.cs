@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 
 namespace AOC_2022.Day16
 {
@@ -12,16 +11,9 @@ namespace AOC_2022.Day16
         }
         public override Task SolveBothParts()
         {
-            var sw = new Stopwatch();
-            sw.Start();
             SolvePartOne();
-            sw.Stop();
-            Console.WriteLine($"Part One: {sw.ElapsedMilliseconds}ms.");
             Console.WriteLine();
-            sw.Restart();
             SolvePartTwo();
-            sw.Stop();
-            Console.WriteLine($"Part Two: {sw.ElapsedMilliseconds}ms.");
             return Task.CompletedTask;
         }
 
