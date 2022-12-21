@@ -37,38 +37,44 @@
             var rootMonkey = monkeys.First(x => x.Name == "root");
             var childMonkeys = (monkeys.First(x => x.Name == rootMonkey.Monkeys!.Value.Item1), monkeys.First(x => x.Name == rootMonkey.Monkeys!.Value.Item2));
 
-            var shouldBeEqualTo = -1L;
-            var exceptionMonkey = rootMonkey;
-            try
+            long? shouldBeEqualTo = null;
+            Monkey numberlessMonkey;
+
+            var child1Number = GetValue(childMonkeys.Item1, monkeys);
+            var child2Number = GetValue(childMonkeys.Item2, monkeys);
+            if (!child1Number.HasValue)
             {
-                shouldBeEqualTo = GetValue(childMonkeys.Item1, monkeys);
+                numberlessMonkey = childMonkeys.Item1;
+                shouldBeEqualTo = child2Number;
             }
-            catch
+            else
             {
-                exceptionMonkey = childMonkeys.Item1;
+                numberlessMonkey = childMonkeys.Item2;
+                shouldBeEqualTo = child1Number;
             }
-            try
-            {
-                shouldBeEqualTo = GetValue(childMonkeys.Item2, monkeys);
-            }
-            catch
-            {
-                exceptionMonkey = childMonkeys.Item2;
-            }
-            SetChildNumber(exceptionMonkey, shouldBeEqualTo, monkeys);
+            SetChildNumber(numberlessMonkey, shouldBeEqualTo!.Value, monkeys);
 
             return Task.CompletedTask;
         }
 
-        private long GetValue(Monkey monkey, List<Monkey> monkeys)
+        private long? GetValue(Monkey monkey, List<Monkey> monkeys)
         {
             if (monkey.Number.HasValue)
             {
                 return monkey.Number.Value;
             }
+            if (!monkey.Number.HasValue && !monkey.Monkeys.HasValue)
+            {
+                return null;
+            }
             var childMonkeys = (monkeys.First(x => x.Name == monkey.Monkeys!.Value.Item1), monkeys.First(x => x.Name == monkey.Monkeys!.Value.Item2));
-            monkey.Number = monkey.Operation!(GetValue(childMonkeys.Item1, monkeys), GetValue(childMonkeys.Item2, monkeys));
-            return monkey.Number.Value;
+            var childMonkeyValues = (GetValue(childMonkeys.Item1, monkeys), GetValue(childMonkeys.Item2, monkeys));
+            if (!childMonkeyValues.Item1.HasValue || !childMonkeyValues.Item2.HasValue)
+            {
+                return null;
+            }
+            monkey.Number = monkey.Operation!(childMonkeyValues.Item1.Value, childMonkeyValues.Item2.Value);
+            return monkey.Number;
         }
 
         private void SetChildNumber(Monkey monkey, long number, List<Monkey> monkeys)
@@ -81,35 +87,18 @@
 
             var childMonkeys = (monkeys.First(x => x.Name == monkey.Monkeys!.Value.Item1), monkeys.First(x => x.Name == monkey.Monkeys!.Value.Item2));
 
-            long? child1Value = null;
-            long? child2Value = null;
+            var child1Value = GetValue(childMonkeys.Item1, monkeys);
+            var child2Value = GetValue(childMonkeys.Item2, monkeys);
 
-            try
-            {
-                child1Value = GetValue(childMonkeys.Item1, monkeys);
-            }
-            catch { }
-            try
-            {
-                child2Value = GetValue(childMonkeys.Item2, monkeys);
-            }
-            catch { }
-
-            if (!child1Value.HasValue && !child2Value.HasValue)
-            {
-                throw new InvalidOperationException("Neither child monkey had a value.");
-            }
-
-            var numberForChild = !child1Value.HasValue ?
-                monkey.InvOperation1!(number, child2Value!.Value) :
-                monkey.InvOperation2!(number, child1Value!.Value);
 
             if (!child1Value.HasValue)
             {
+                var numberForChild = monkey.InvOperation1!(number, child2Value!.Value);
                 SetChildNumber(childMonkeys.Item1, numberForChild, monkeys);
             }
             else
             {
+                var numberForChild = monkey.InvOperation2!(number, child1Value!.Value);
                 SetChildNumber(childMonkeys.Item2, numberForChild, monkeys);
             }
         }
