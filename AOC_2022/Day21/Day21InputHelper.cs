@@ -35,7 +35,7 @@ namespace AOC_2022.Day21
                                 break;
                             case "-":
                                 operationFunc = (long a, long b) => a - b;
-                                operationInverse1 = (long value, long child2) => child2 - value;
+                                operationInverse1 = (long value, long child2) => child2 + value;
                                 operationInverse2 = (long value, long child1) => child1 - value;
                                 break;
                             case "*":
@@ -51,13 +51,26 @@ namespace AOC_2022.Day21
                             default:
                                 throw new ArgumentOutOfRangeException($"Unexpected operation value: {operation}");
                         };
-                        var monkey = new Monkey(nameMatches[0].Value, null, operationFunc, (nameMatches[1].Value, nameMatches[2].Value));
+                        var monkey = new Monkey(
+                            nameMatches[0].Value,
+                            null,
+                            operationFunc, 
+                            (nameMatches[1].Value, nameMatches[2].Value),
+                            operationInverse1,
+                            operationInverse2
+                            );
                         output.Add(monkey);
                     }
                     else
                     {
                         var numberMatch = numberRegex.Match(ln).Value;
-                        var monkey = new Monkey(nameMatches[0].Value, long.Parse(numberMatch), null, null);
+                        var monkey = new Monkey(
+                            nameMatches[0].Value,
+                            long.Parse(numberMatch),
+                            null,
+                            null,
+                            null,
+                            null);
                         output.Add(monkey);
                     }
                 }

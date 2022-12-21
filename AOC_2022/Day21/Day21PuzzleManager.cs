@@ -4,8 +4,6 @@
     {
         private Day21InputHelper _inputHelper;
 
-        //new protected const string INPUT_FILE_NAME = "test.txt";
-
         public Day21PuzzleManager()
         {
             var inputHelper = new Day21InputHelper(INPUT_FILE_NAME);
@@ -21,8 +19,6 @@
 
         public override Task SolvePartOne()
         {
-            // Try the recursive approach - if that overflows try the two list approach
-
             var monkeys = _inputHelper.Parse();
             var rootMonkey = monkeys.First(x => x.Name == "root");
 
@@ -59,9 +55,8 @@
             {
                 exceptionMonkey = childMonkeys.Item2;
             }
+            SetChildNumber(exceptionMonkey, shouldBeEqualTo, monkeys);
 
-            var solution = 0;
-            Console.WriteLine($"The solution to part two is '{solution}'.");
             return Task.CompletedTask;
         }
 
@@ -76,27 +71,46 @@
             return monkey.Number.Value;
         }
 
-        private void SetChildForEquality(Monkey monkey, long equalityValue, List<Monkey> monkeys)
+        private void SetChildNumber(Monkey monkey, long number, List<Monkey> monkeys)
         {
+            if (!monkey.Monkeys.HasValue)
+            {
+                Console.WriteLine($"The solution to part two is '{number}'.");
+                return;
+            }
+
             var childMonkeys = (monkeys.First(x => x.Name == monkey.Monkeys!.Value.Item1), monkeys.First(x => x.Name == monkey.Monkeys!.Value.Item2));
 
-            var shouldBeEqualTo = -1L;
-            var exceptionMonkey = monkey;
+            long? child1Value = null;
+            long? child2Value = null;
+
             try
             {
-                shouldBeEqualTo = GetValue(childMonkeys.Item1, monkeys);
+                child1Value = GetValue(childMonkeys.Item1, monkeys);
             }
-            catch
-            {
-                exceptionMonkey = childMonkeys.Item1;
-            }
+            catch { }
             try
             {
-                shouldBeEqualTo = GetValue(childMonkeys.Item2, monkeys);
+                child2Value = GetValue(childMonkeys.Item2, monkeys);
             }
-            catch
+            catch { }
+
+            if (!child1Value.HasValue && !child2Value.HasValue)
             {
-                exceptionMonkey = childMonkeys.Item2;
+                throw new InvalidOperationException("Neither child monkey had a value.");
+            }
+
+            var numberForChild = !child1Value.HasValue ?
+                monkey.InvOperation1!(number, child2Value!.Value) :
+                monkey.InvOperation2!(number, child1Value!.Value);
+
+            if (!child1Value.HasValue)
+            {
+                SetChildNumber(childMonkeys.Item1, numberForChild, monkeys);
+            }
+            else
+            {
+                SetChildNumber(childMonkeys.Item2, numberForChild, monkeys);
             }
         }
     }
