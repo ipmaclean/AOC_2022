@@ -4,8 +4,6 @@ namespace AOC_2022.Day24
 {
     public class Day24PuzzleManager : PuzzleManager
     {
-        //new protected const string INPUT_FILE_NAME = "test.txt";
-
         public List<string> Input { get; set; }
 
         public Day24PuzzleManager()
