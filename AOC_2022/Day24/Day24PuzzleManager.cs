@@ -1,4 +1,4 @@
-﻿using AOC_2022.Day22;
+﻿using System.Diagnostics;
 
 namespace AOC_2022.Day24
 {
@@ -15,9 +15,16 @@ namespace AOC_2022.Day24
         }
         public override Task SolveBothParts()
         {
+            var sw = new Stopwatch();
+            sw.Start();
             SolvePartOne();
+            sw.Stop();
+            Console.WriteLine($"Part one: {sw.ElapsedMilliseconds}ms.");
             Console.WriteLine();
+            sw.Restart();
             SolvePartTwo();
+            sw.Stop();
+            Console.WriteLine($"Part two: {sw.ElapsedMilliseconds}ms.");
             return Task.CompletedTask;
         }
 
@@ -25,15 +32,38 @@ namespace AOC_2022.Day24
         {
             var cycleLength = Lcm(Input[0].Length - 2, Input.Count - 2);
             var valley = ParseValley(cycleLength);
-            Console.WriteLine($"The solution to part one is '{FindShortestTime(cycleLength, valley)}'.");
+            var startCoord = (1, 0);
+            var endCoord = (valley.GetLength(0) - 2, valley.GetLength(1) - 1);
+            var solutionState = FindShortestTime(startCoord, endCoord, 0, cycleLength, valley);
+            Console.WriteLine($"The solution to part one is '{solutionState.Time}'.");
             return Task.CompletedTask;
         }
 
-        private static int FindShortestTime(int cycleLength, HashSet<int>[,] valley)
+        public override Task SolvePartTwo()
+        {
+            var cycleLength = Lcm(Input[0].Length - 2, Input.Count - 2);
+            var valley = ParseValley(cycleLength);
+            var startCoord = (1, 0);
+            var endCoord = (valley.GetLength(0) - 2, valley.GetLength(1) - 1);
+            var solutionState1 = FindShortestTime(startCoord, endCoord, 0, cycleLength, valley);
+            var solutionState2 = FindShortestTime(endCoord, startCoord, solutionState1.Time, cycleLength, valley);
+            var solutionState3 = FindShortestTime(startCoord, endCoord, solutionState2.Time, cycleLength, valley);
+
+            Console.WriteLine($"The solution to part two is '{solutionState3.Time}'.");
+            return Task.CompletedTask;
+        }
+
+        private static (int X, int Y, int Time) FindShortestTime(
+            (int X, int Y) startCoord, 
+            (int X, int Y) endCoord, 
+            int startTime,
+            int cycleLength,
+            HashSet<int>[,] valley
+            )
         {
             var statesToVisit = new Queue<(int X, int Y, int Time)>();
-            var visitedStates = new HashSet<string>() { GetStateHash((1, 0), 0) };
-            statesToVisit.Enqueue((1, 0, 0));
+            var visitedStates = new HashSet<string>() { GetStateHash(startCoord, startTime) };
+            statesToVisit.Enqueue((startCoord.X, startCoord.Y, startTime));
             var directions = new (int X, int Y)[]
             {
                 (1, 0),
@@ -57,9 +87,9 @@ namespace AOC_2022.Day24
                         continue;
                     }
 
-                    if (nextCoord.X == valley.GetLength(0) - 2 && nextCoord.Y == valley.GetLength(1) - 1)
+                    if (nextCoord == endCoord)
                     {
-                        return currentState.Time + 1;
+                        return (nextCoord.X, nextCoord.Y, currentState.Time + 1);
                     }
 
                     visitedStates.Add(GetStateHash(nextCoord, (currentState.Time + 1) % cycleLength));
@@ -130,13 +160,6 @@ namespace AOC_2022.Day24
                     position.Add(i);
                 }
             }
-        }
-
-        public override Task SolvePartTwo()
-        {
-            var solution = 0;
-            Console.WriteLine($"The solution to part two is '{solution}'.");
-            return Task.CompletedTask;
         }
 
         private static (int X, int Y) GetBlizzardUnitVector(char tile) => tile switch
