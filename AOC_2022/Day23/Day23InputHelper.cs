@@ -1,14 +1,14 @@
 ﻿namespace AOC_2022.Day23
 {
-    internal class Day23InputHelper : InputHelper<HashSet<Elf>>
+    internal class Day23InputHelper : InputHelper<Dictionary<(int X, int Y), (int X, int Y)>>
     {
         public Day23InputHelper(string fileName) : base(fileName)
         {
         }
 
-        public override HashSet<Elf> Parse()
+        public override Dictionary<(int X, int Y), (int X, int Y)> Parse()
         {
-            var output = new HashSet<Elf>();
+            var output = new Dictionary<(int X, int Y), (int X, int Y)>();
 
             using (var sr = new StreamReader(InputPath))
             {
@@ -21,7 +21,7 @@
                     {
                         if (tile == '#')
                         {
-                            output.Add(new Elf((xCoord, yCoord)));
+                            output.Add((xCoord, yCoord), (0, 0));
                         }
                         xCoord++;
                     }
