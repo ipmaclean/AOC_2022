@@ -1,4 +1,4 @@
-﻿using AOC_2022.Day22;
+﻿using System.Diagnostics;
 using System.Text;
 
 namespace AOC_2022.Day25
@@ -7,6 +7,24 @@ namespace AOC_2022.Day25
     {
         public List<string> Input { get; set; }
 
+        private Dictionary<char, int> _snafuDigitToDecimal = new Dictionary<char, int>()
+        {
+            { '2', 2 },
+            {'1', 1 },
+            {'0', 0 },
+            { '-', -1 },
+            { '=', -2 }
+        };
+
+        private Dictionary<double, char> _decimalDigitToSnafu = new Dictionary<double, char>()
+        {
+            { 2, '2' },
+            { 1, '1' },
+            { 0, '0' },
+            { -1, '-' },
+            { -2, '=' }
+        };
+
         public Day25PuzzleManager()
         {
             var inputHelper = new Day25InputHelper(INPUT_FILE_NAME);
@@ -14,9 +32,16 @@ namespace AOC_2022.Day25
         }
         public override Task SolveBothParts()
         {
+            var sw = new Stopwatch();
+            sw.Start();
             SolvePartOne();
+            sw.Stop();
+            Console.WriteLine($"Part one: {sw.ElapsedMilliseconds}ms.");
             Console.WriteLine();
+            sw.Restart();
             SolvePartTwo();
+            sw.Stop();
+            Console.WriteLine($"Part two: {sw.ElapsedMilliseconds}ms.");
             return Task.CompletedTask;
         }
 
@@ -36,7 +61,7 @@ namespace AOC_2022.Day25
             var sum = 0d;
             for (var i = snafu.Length - 1; i >= 0; i--)
             {
-                sum += SnafuDigitToDecimal(snafu[i]) * Math.Pow(5, (double)(snafu.Length - 1 - i));
+                sum += _snafuDigitToDecimal[snafu[i]] * Math.Pow(5, (double)(snafu.Length - 1 - i));
             }
             return sum;
         }
@@ -47,7 +72,7 @@ namespace AOC_2022.Day25
             // Find the largest power of 5 that when doubled
             // is greater than or equal to the decimal.
             var largestPower = 0;
-            while (2 * Math.Pow(5, largestPower) < decNumber)
+            while (2 * Math.Pow(5, largestPower) < Math.Abs(decNumber))
             {
                 largestPower++;
             }
@@ -65,35 +90,52 @@ namespace AOC_2022.Day25
                     }
                 }
                 decNumber = closestValueToZero;
-                sb.Append(DecimalDigitToSnafu((int)closestMultiplierToZero));
+                sb.Append(_decimalDigitToSnafu[closestMultiplierToZero]);
             }
             return sb.ToString();
         }
 
-        private static double SnafuDigitToDecimal(char digit) => digit switch
-        {
-            '2' => 2,
-            '1' => 1,
-            '0' => 0,
-            '-' => -1,
-            '=' => -2,
-            _ => throw new ArgumentOutOfRangeException($"Unexpected digit value: {digit}"),
-        };
-
-        private static char DecimalDigitToSnafu(int digit) => digit switch
-        {
-            2 => '2',
-            1 => '1',
-            0 => '0',
-            -1 => '-',
-            -2 => '=',
-            _ => throw new ArgumentOutOfRangeException($"Unexpected digit value: {digit}"),
-        };
-
         public override Task SolvePartTwo()
         {
-            Console.WriteLine($"Well done, you've saved Christmas!");
+            var solution = "0";
+            foreach (var snafu in Input)
+            {
+                solution = AddSnafu(solution, snafu);
+            }
+            Console.WriteLine($"The solution to part two is '{solution}'.");
             return Task.CompletedTask;
+        }
+
+        private string AddSnafu(string a, string b)
+        {
+            var shorterString = a.Length < b.Length ? a : b;
+            var longerString = a.Length >= b.Length ? a : b;
+            shorterString = shorterString.PadLeft(longerString.Length, '0');
+
+            var sb = new StringBuilder();
+            var carried = 0;
+            for (var i = 0; i < shorterString.Length; i++)
+            {
+                var addition = _snafuDigitToDecimal[shorterString[shorterString.Length - i - 1]] +
+                                _snafuDigitToDecimal[longerString[longerString.Length - i - 1]] +
+                                    carried;
+                carried = 0;
+                if (addition % 3 != addition)
+                {
+                    carried = addition / Math.Abs(addition);
+                }
+                sb.Append(_decimalDigitToSnafu[Mod(addition + 2, 5) - 2]);
+            }
+            if (carried != 0)
+            {
+                sb.Append(_decimalDigitToSnafu[carried]);
+            }
+            return new string(sb.ToString().ToCharArray().Reverse().ToArray());
+        }
+
+        private static int Mod(int x, int m)
+        {
+            return (x % m + m) % m;
         }
     }
 }
