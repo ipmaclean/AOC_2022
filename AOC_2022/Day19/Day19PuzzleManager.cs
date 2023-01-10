@@ -1,4 +1,7 @@
-﻿namespace AOC_2022.Day19
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
+
+namespace AOC_2022.Day19
 {
     public class Day19PuzzleManager : PuzzleManager
     {
@@ -12,31 +15,38 @@
 
         public override Task SolveBothParts()
         {
+            var sw = new Stopwatch();
+            sw.Start();
             SolvePartOne();
+            sw.Stop();
+            Console.WriteLine($"Part one: {sw.ElapsedMilliseconds}ms.");
             Console.WriteLine();
+            sw.Restart();
             SolvePartTwo();
+            sw.Stop();
+            Console.WriteLine($"Part two: {sw.ElapsedMilliseconds}ms.");
             return Task.CompletedTask;
         }
 
         public override Task SolvePartOne()
         {
-            var solution = 0;
-            foreach (var blueprint in Blueprints)
+            var solutions = new ConcurrentBag<int>();
+            Parallel.ForEach(Blueprints, (blueprint) =>
             {
-                solution += blueprint.Name * FindMaxGeodes(blueprint, 24);
-            }
-            Console.WriteLine($"The solution to part one is '{solution}'.");
+                solutions.Add(blueprint.Name * FindMaxGeodes(blueprint, 24));
+            });
+            Console.WriteLine($"The solution to part one is '{solutions.Sum()}'.");
             return Task.CompletedTask;
         }
 
         public override Task SolvePartTwo()
         {
-            var solution = 1;
-            for (var i = 0; i < 3; i++)
+            var solutions = new ConcurrentBag<int>();
+            Parallel.For(0, 3, (i) =>
             {
-                solution *= FindMaxGeodes(Blueprints[i], 32);
-            }
-            Console.WriteLine($"The solution to part two is '{solution}'.");
+                solutions.Add(FindMaxGeodes(Blueprints[i], 32));
+            });
+            Console.WriteLine($"The solution to part two is '{solutions.Aggregate(1, (acc, val) => acc * val)}'.");
             return Task.CompletedTask;
         }
 
